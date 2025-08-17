@@ -700,13 +700,18 @@ async def wp_get_post_revisions(
         return format_response({"status": "error", "message": str(e)})
 
 
-# Import and register the remaining 25 tools
-try:
-    from additional_wordpress_tools import register_additional_tools
-    register_additional_tools(mcp, wp_manager, validate_positive_int, format_response)
-    logger.info("Successfully registered additional WordPress tools")
-except Exception as e:
-    logger.error(f"Error registering additional tools: {e}")
+def register_all_additional_tools():
+    """Register additional tools after server initialization"""
+    try:
+        from additional_wordpress_tools import register_additional_tools
+        register_additional_tools(mcp, wp_manager, validate_positive_int, format_response)
+        logger.info("Successfully registered additional WordPress tools")
+        print("✅ All additional WordPress tools registered successfully!")
+        return True
+    except Exception as e:
+        logger.error(f"Error registering additional tools: {e}")
+        print(f"❌ Error registering additional tools: {e}")
+        return False
 
 
 def create_ssl_context(cert_path: str, key_path: str) -> ssl.SSLContext:
@@ -774,6 +779,9 @@ def main():
             wp_manager.server_config.ssl_cert_path = args.ssl_cert
             wp_manager.server_config.ssl_key_path = args.ssl_key
     
+    # Register additional tools after server configuration
+    register_all_additional_tools()
+    
     # Run the server based on transport choice
     if args.transport == "stdio":
         logger.info("Starting WordPress MCP Server with stdio transport")
@@ -785,6 +793,8 @@ def main():
         mcp.settings.streamable_http_path = wp_manager.server_config.mount_path
         
         print_connection_info(wp_manager.server_config)
+        print("🎯 Expected Tools: 15 (main) + 21 (additional) = 36+ WordPress tools")
+        print("📊 If Claude Desktop shows fewer tools, try refreshing the connection!")
         
         # Run with streamable HTTP transport
         asyncio.run(mcp.run(transport="streamable-http"))
