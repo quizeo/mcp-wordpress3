@@ -646,7 +646,7 @@ def register_comment_tools():
                 params["search"] = search
                 
             async with wp_manager.get_client(site_id) as client:
-                response = await client.get("/wp/v2/comments", params=params)
+                response = await client.get("/comments", params=params)
                 return format_response({
                     "comments": response,
                     "total_found": len(response) if isinstance(response, list) else 0,
@@ -665,7 +665,7 @@ def register_comment_tools():
             site_id = wp_manager.get_site_id(site)
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.get(f"/wp/v2/comments/{id}")
+                response = await client.get(f"/comments/{id}")
                 return format_response({
                     "comment": response,
                     "site": site_id
@@ -695,7 +695,7 @@ def register_comment_tools():
                 comment_data["author_email"] = author_email
                 
             async with wp_manager.get_client(site_id) as client:
-                response = await client.post("/wp/v2/comments", json=comment_data)
+                response = await client.post("/comments", json=comment_data)
                 return format_response({
                     "comment": response,
                     "message": "Comment created successfully",
@@ -722,7 +722,7 @@ def register_comment_tools():
                 update_data["status"] = status
                 
             async with wp_manager.get_client(site_id) as client:
-                response = await client.post(f"/wp/v2/comments/{id}", json=update_data)
+                response = await client.put(f"/comments/{id}", json=update_data)
                 return format_response({
                     "comment": response,
                     "message": "Comment updated successfully",
@@ -743,7 +743,7 @@ def register_comment_tools():
             
             params = {"force": force} if force else {}
             async with wp_manager.get_client(site_id) as client:
-                response = await client.delete(f"/wp/v2/comments/{id}", params=params)
+                response = await client.delete(f"/comments/{id}", params=params)
                 return format_response({
                     "comment": response,
                     "message": "Comment deleted successfully",
@@ -771,6 +771,7 @@ def register_page_tools():
             site_id = wp_manager.get_site_id(site)
             
             params = {
+                "post_type": "page",
                 "per_page": min(per_page, 100),
                 "page": page,
                 "order": order,
@@ -782,17 +783,12 @@ def register_page_tools():
                 params["status"] = status
                 
             async with wp_manager.get_client(site_id) as client:
-                response = await client.get("/wp/v2/pages", params=params)
+                response = await client.get("/posts", params=params)
                 return format_response({
                     "pages": response,
                     "total_found": len(response) if isinstance(response, list) else 0,
                     "site": site_id
                 })
-            return format_response({
-                "pages": response,
-                "total_found": len(response),
-                "site": site_id
-            })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -806,7 +802,7 @@ def register_page_tools():
             site_id = wp_manager.get_site_id(site)
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.get(f"/wp/v2/pages/{id}")
+                response = await client.get(f"/posts/{id}")
                 return format_response({
                     "page": response,
                     "site": site_id
@@ -836,7 +832,8 @@ def register_page_tools():
                 page_data["parent"] = parent
                 
             async with wp_manager.get_client(site_id) as client:
-                response = await client.post("/wp/v2/pages", json=page_data)
+                page_data["post_type"] = "page"  # Specify this is a page
+                response = await client.post("/posts", json=page_data)
                 return format_response({
                     "page": response,
                     "message": "Page created successfully",
@@ -869,7 +866,7 @@ def register_page_tools():
                 update_data["parent"] = parent
                 
             async with wp_manager.get_client(site_id) as client:
-                response = await client.post(f"/wp/v2/pages/{id}", json=update_data)
+                response = await client.put(f"/posts/{id}", json=update_data)
                 return format_response({
                     "page": response,
                     "message": "Page updated successfully",
@@ -890,7 +887,7 @@ def register_page_tools():
             
             params = {"force": force} if force else {}
             async with wp_manager.get_client(site_id) as client:
-                response = await client.delete(f"/wp/v2/pages/{id}", params=params)
+                response = await client.delete(f"/posts/{id}", params=params)
                 return format_response({
                     "page": response,
                     "message": "Page deleted successfully",
@@ -925,7 +922,7 @@ def register_user_tools():
                 params["roles"] = ",".join(roles)
                 
             async with wp_manager.get_client(site_id) as client:
-                response = await client.get("/wp/v2/users", params=params)
+                response = await client.get("/users", params=params)
                 return format_response({
                     "users": response,
                     "total_found": len(response) if isinstance(response, list) else 0,
@@ -933,7 +930,7 @@ def register_user_tools():
                 })
                 params["roles"] = ",".join(roles)
                 
-            response = await client.get("/wp/v2/users", params=params)
+            response = await client.get("/users", params=params)
             return format_response({
                 "users": response,
                 "total_found": len(response),
@@ -952,7 +949,7 @@ def register_user_tools():
             site_id = wp_manager.get_site_id(site)
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.get(f"/wp/v2/users/{id}")
+                response = await client.get(f"/users/{id}")
                 return format_response({
                     "user": response,
                     "site": site_id
@@ -1006,7 +1003,7 @@ def register_user_tools():
                 user_data["last_name"] = last_name
                 
             async with wp_manager.get_client(site_id) as client:
-                response = await client.post("/wp/v2/users", json=user_data)
+                response = await client.post("/users", json=user_data)
                 return format_response({
                     "user": response,
                     "message": "User created successfully",
@@ -1039,7 +1036,7 @@ def register_user_tools():
                 update_data["roles"] = roles
                 
             async with wp_manager.get_client(site_id) as client:
-                response = await client.post(f"/wp/v2/users/{id}", json=update_data)
+                response = await client.put(f"/users/{id}", json=update_data)
                 return format_response({
                     "user": response,
                     "message": "User updated successfully",
@@ -1063,7 +1060,7 @@ def register_user_tools():
                 params["reassign"] = reassign
                 
             async with wp_manager.get_client(site_id) as client:
-                response = await client.delete(f"/wp/v2/users/{id}", params=params)
+                response = await client.delete(f"/users/{id}", params=params)
                 return format_response({
                     "user": response,
                     "message": "User deleted successfully",
@@ -1088,17 +1085,17 @@ def register_user_tools():
             async with wp_manager.get_client(site_id) as client:
                 # Search posts
                 if type in ["any", "posts"]:
-                    posts = await client.get("/wp/v2/posts", params={"search": query, "per_page": per_page})
+                    posts = await client.get("/posts", params={"search": query, "per_page": per_page})
                     results["posts"] = posts
                 
                 # Search pages  
                 if type in ["any", "pages"]:
-                    pages = await client.get("/wp/v2/pages", params={"search": query, "per_page": per_page})
+                    pages = await client.get("/posts", params={"search": query, "per_page": per_page, "post_type": "page"})
                     results["pages"] = pages
                     
                 # Search media
                 if type in ["any", "media"]:
-                    media = await client.get("/wp/v2/media", params={"search": query, "per_page": per_page})
+                    media = await client.get("/media", params={"search": query, "per_page": per_page})
                     results["media"] = media
                     
                 return format_response({
@@ -1119,9 +1116,9 @@ def register_user_tools():
             
             async with wp_manager.get_client(site_id) as client:
                 # Get site settings and other health indicators
-                settings = await client.get("/wp/v2/settings")
-                users = await client.get("/wp/v2/users", params={"per_page": 1})
-                posts = await client.get("/wp/v2/posts", params={"per_page": 1})
+                settings = await client.get("/settings")
+                users = await client.get("/users", params={"per_page": 1})
+                posts = await client.get("/posts", params={"per_page": 1})
                 
                 return format_response({
                     "site_title": settings.get("title", "Unknown"),
@@ -1147,7 +1144,7 @@ def register_user_tools():
             async with wp_manager.get_client(site_id) as client:
                 # Try to get plugins info (requires appropriate permissions)
                 try:
-                    response = await client.get("/wp/v2/plugins")
+                    response = await client.get("/plugins")
                     return format_response({
                         "plugins": response,
                         "site": site_id
