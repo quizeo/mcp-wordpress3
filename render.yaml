@@ -1,0 +1,28 @@
+# Render deployment configuration for WordPress MCP Server
+services:
+  - type: web
+    name: wordpress-mcp-server
+    env: docker
+    plan: starter # Free tier - upgrade for production
+    dockerfilePath: ./Dockerfile
+    region: oregon # Change to your preferred region
+    buildCommand: "" # Docker build handles this
+    startCommand: "" # Dockerfile CMD handles this
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: HOST
+        value: "0.0.0.0"
+      - key: PORT
+        value: "10000"
+      # Add your WordPress site credentials here or in Render dashboard
+      # - key: MCP_API_KEY
+      #   value: "your-secure-api-key-here"
+      # - key: WORDPRESS_SITE_URL_1
+      #   value: "https://your-wordpress-site.com"
+      # - key: WORDPRESS_USERNAME_1
+      #   value: "your-username"
+      # - key: WORDPRESS_APP_PASSWORD_1
+      #   value: "your-app-password"
+    healthCheckPath: /mcp
+    autoDeploy: true # Auto-deploy on git push

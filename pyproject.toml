@@ -1,0 +1,10 @@
+[project]
+name = "wordpress-mcp-test"
+version = "0.1.0"
+description = "WordPress MCP Server with 59 tools for comprehensive WordPress management"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp[cli]>=1.13.0",
+    "httpx>=0.25.0",
+]

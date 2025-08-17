@@ -1,0 +1,33 @@
+{
+  "sites": [
+    {
+      "id": "generatebetter-ai",
+      "name": "GenerateBetter AI Site",
+      "config": {
+        "WORDPRESS_SITE_URL": "https://generatebetter.ai",
+        "WORDPRESS_USERNAME": "admin",
+        "WORDPRESS_APP_PASSWORD": "6H9J H0ah RvRa pqQG Uy45 Qndx",
+        "WORDPRESS_AUTH_METHOD": "app-password"
+      }
+    },
+    {
+      "id": "onlywinnersinthebuilding",
+      "name": "Only Winners In The Building",
+      "config": {
+        "WORDPRESS_SITE_URL": "https://onlywinnersinthebuilding.com",
+        "WORDPRESS_USERNAME": "buxx14@gmail.com",
+        "WORDPRESS_APP_PASSWORD": "kYXT OH6j Srr0 g4Yb kcub exdy",
+        "WORDPRESS_AUTH_METHOD": "app-password"
+      }
+    }
+  ],
+  "server": {
+    "host": "localhost",
+    "port": 8000,
+    "ssl_cert_path": null,
+    "ssl_key_path": null,
+    "api_key": null,
+    "cors_origins": ["*"],
+    "mount_path": "/mcp"
+  }
+}
