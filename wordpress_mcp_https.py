@@ -126,26 +126,30 @@ class WordPressClient:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.client.aclose()
     
-    async def request(self, method: str, endpoint: str, **kwargs) -> httpx.Response:
-        """Make HTTP request to WordPress API"""
+    async def request(self, method: str, endpoint: str, **kwargs) -> dict:
+        """Make HTTP request to WordPress API and return JSON data"""
         url = f"{self.base_url}{endpoint}"
         response = await self.client.request(method, url, **kwargs)
         response.raise_for_status()
-        return response
+        try:
+            return response.json()
+        except Exception:
+            # If response is not JSON, return the text content
+            return {"content": response.text, "status_code": response.status_code}
     
-    async def get(self, endpoint: str, **kwargs) -> httpx.Response:
+    async def get(self, endpoint: str, **kwargs) -> dict:
         """GET request"""
         return await self.request("GET", endpoint, **kwargs)
     
-    async def post(self, endpoint: str, **kwargs) -> httpx.Response:
+    async def post(self, endpoint: str, **kwargs) -> dict:
         """POST request"""
         return await self.request("POST", endpoint, **kwargs)
     
-    async def put(self, endpoint: str, **kwargs) -> httpx.Response:
+    async def put(self, endpoint: str, **kwargs) -> dict:
         """PUT request"""
         return await self.request("PUT", endpoint, **kwargs)
     
-    async def delete(self, endpoint: str, **kwargs) -> httpx.Response:
+    async def delete(self, endpoint: str, **kwargs) -> dict:
         """DELETE request"""
         return await self.request("DELETE", endpoint, **kwargs)
 

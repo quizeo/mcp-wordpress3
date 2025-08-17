@@ -60,8 +60,12 @@ def register_media_tools():
             if mime_type: params["mime_type"] = mime_type
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.request("GET", "/media", params=params)
-                return format_response(response)
+                response = await client.get("/media", params=params)
+                return format_response({
+                    "status": "success",
+                    "message": f"Retrieved {len(response) if isinstance(response, list) else 'unknown number of'} media files",
+                    "data": response
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -73,8 +77,12 @@ def register_media_tools():
             media_id = validate_positive_int(media_id, "media_id")
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.request("GET", f"/media/{media_id}")
-                return format_response(response)
+                response = await client.get(f"/media/{media_id}")
+                return format_response({
+                    "status": "success",
+                    "message": "Media file retrieved successfully",
+                    "data": response
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -134,8 +142,12 @@ def register_media_tools():
                 raise ValueError("At least one field must be provided to update")
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.request("POST", f"/media/{media_id}", json=data)
-                return format_response(response)
+                response = await client.post(f"/media/{media_id}", json=data)
+                return format_response({
+                    "status": "success",
+                    "message": "Media file updated successfully",
+                    "data": response
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -153,12 +165,12 @@ def register_media_tools():
             params = {"force": force} if force else {}
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.request("DELETE", f"/media/{media_id}", params=params)
+                response = await client.delete(f"/media/{media_id}", params=params)
                 action = "permanently deleted" if force else "moved to trash"
                 return format_response({
                     "status": "success",
                     "message": f"Media {media_id} {action} successfully",
-                    "media": response
+                    "data": response
                 })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
@@ -196,8 +208,12 @@ def register_taxonomy_tools():
             if parent: params["parent"] = parent
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.request("GET", "/categories", params=params)
-                return format_response(response)
+                response = await client.get("/categories", params=params)
+                return format_response({
+                    "categories": response,
+                    "total_found": len(response) if isinstance(response, list) else 1,
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -209,8 +225,11 @@ def register_taxonomy_tools():
             category_id = validate_positive_int(category_id, "category_id")
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.request("GET", f"/categories/{category_id}")
-                return format_response(response)
+                response = await client.get(f"/categories/{category_id}")
+                return format_response({
+                    "category": response,
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -231,8 +250,12 @@ def register_taxonomy_tools():
             if parent: data["parent"] = parent
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.request("POST", "/categories", json=data)
-                return format_response(response)
+                response = await client.post("/categories", json=data)
+                return format_response({
+                    "status": "success",
+                    "message": "Category created successfully",
+                    "data": response
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -260,8 +283,12 @@ def register_taxonomy_tools():
                 raise ValueError("At least one field must be provided to update")
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.request("POST", f"/categories/{category_id}", json=data)
-                return format_response(response)
+                response = await client.post(f"/categories/{category_id}", json=data)
+                return format_response({
+                    "status": "success",
+                    "message": "Category updated successfully",
+                    "data": response
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -279,11 +306,11 @@ def register_taxonomy_tools():
             params = {"force": force} if force else {}
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.request("DELETE", f"/categories/{category_id}", params=params)
+                response = await client.delete(f"/categories/{category_id}", params=params)
                 return format_response({
                     "status": "success",
                     "message": f"Category {category_id} deleted successfully",
-                    "category": response
+                    "data": response
                 })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
@@ -316,8 +343,12 @@ def register_taxonomy_tools():
             if include: params["include"] = ",".join(str(i) for i in include)
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.request("GET", "/tags", params=params)
-                return format_response(response)
+                response = await client.get("/tags", params=params)
+                return format_response({
+                    "status": "success",
+                    "message": f"Retrieved {len(response) if isinstance(response, list) else 'unknown number of'} tags",
+                    "data": response
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -329,8 +360,12 @@ def register_taxonomy_tools():
             tag_id = validate_positive_int(tag_id, "tag_id")
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.request("GET", f"/tags/{tag_id}")
-                return format_response(response)
+                response = await client.get(f"/tags/{tag_id}")
+                return format_response({
+                    "status": "success",
+                    "message": "Tag retrieved successfully",
+                    "data": response
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -349,8 +384,12 @@ def register_taxonomy_tools():
             if slug: data["slug"] = slug
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.request("POST", "/tags", json=data)
-                return format_response(response)
+                response = await client.post("/tags", json=data)
+                return format_response({
+                    "status": "success",
+                    "message": "Tag created successfully",
+                    "data": response
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -376,8 +415,12 @@ def register_taxonomy_tools():
                 raise ValueError("At least one field must be provided to update")
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.request("POST", f"/tags/{tag_id}", json=data)
-                return format_response(response)
+                response = await client.post(f"/tags/{tag_id}", json=data)
+                return format_response({
+                    "status": "success",
+                    "message": "Tag updated successfully",
+                    "data": response
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -395,11 +438,11 @@ def register_taxonomy_tools():
             params = {"force": force} if force else {}
             
             async with wp_manager.get_client(site_id) as client:
-                response = await client.request("DELETE", f"/tags/{tag_id}", params=params)
+                response = await client.delete(f"/tags/{tag_id}", params=params)
                 return format_response({
                     "status": "success",
                     "message": f"Tag {tag_id} deleted successfully",
-                    "tag": response
+                    "data": response
                 })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
