@@ -1,6 +1,7 @@
 """
-Additional WordPress MCP Tools - Media, Taxonomy, Cache, and Performance
-This module contains the remaining 25 tools to complete the 59-tool WordPress MCP implementation.
+Additional WordPress MCP Tools - Complete 59 Tool Implementation
+This module contains all remaining tools to complete the 59-tool WordPress MCP implementation.
+Categories: Media, Taxonomy, Cache, Performance, Comments, Pages, Users
 """
 
 from typing import Optional, List, Dict, Any
@@ -26,6 +27,9 @@ def register_additional_tools(mcp_server, manager, validator, formatter):
     register_taxonomy_tools()
     register_cache_tools()
     register_performance_tools()
+    register_comment_tools()
+    register_page_tools()
+    register_user_tools()
 
 
 def register_media_tools():
@@ -567,5 +571,537 @@ def register_performance_tools():
                 "message": f"Performance data export ({format}) simulated",
                 "note": "This requires performance monitoring integration"
             })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+
+def register_comment_tools():
+    """Register comment management tools"""
+    
+    @mcp.tool()
+    async def wp_list_comments(
+        post: Optional[int] = None,
+        status: Optional[str] = None,
+        per_page: int = 10,
+        page: int = 1,
+        search: Optional[str] = None,
+        site: Optional[str] = None
+    ) -> str:
+        """List comments from a WordPress site."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            params = {
+                "per_page": min(per_page, 100),
+                "page": page
+            }
+            if post:
+                params["post"] = post
+            if status:
+                params["status"] = status
+            if search:
+                params["search"] = search
+                
+            response = await client.get("/wp/v2/comments", params=params)
+            return format_response({
+                "comments": response,
+                "total_found": len(response),
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_get_comment(
+        id: int,
+        site: Optional[str] = None
+    ) -> str:
+        """Get a specific comment by ID."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            response = await client.get(f"/wp/v2/comments/{id}")
+            return format_response({
+                "comment": response,
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_create_comment(
+        post: int,
+        content: str,
+        author_name: Optional[str] = None,
+        author_email: Optional[str] = None,
+        site: Optional[str] = None
+    ) -> str:
+        """Create a new comment on a post."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            comment_data = {
+                "post": post,
+                "content": content
+            }
+            if author_name:
+                comment_data["author_name"] = author_name
+            if author_email:
+                comment_data["author_email"] = author_email
+                
+            response = await client.post("/wp/v2/comments", json=comment_data)
+            return format_response({
+                "comment": response,
+                "message": "Comment created successfully",
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_update_comment(
+        id: int,
+        content: Optional[str] = None,
+        status: Optional[str] = None,
+        site: Optional[str] = None
+    ) -> str:
+        """Update an existing comment."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            update_data = {}
+            if content:
+                update_data["content"] = content
+            if status:
+                update_data["status"] = status
+                
+            response = await client.post(f"/wp/v2/comments/{id}", json=update_data)
+            return format_response({
+                "comment": response,
+                "message": "Comment updated successfully",
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_delete_comment(
+        id: int,
+        force: bool = False,
+        site: Optional[str] = None
+    ) -> str:
+        """Delete a comment."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            params = {"force": force} if force else {}
+            response = await client.delete(f"/wp/v2/comments/{id}", params=params)
+            return format_response({
+                "comment": response,
+                "message": "Comment deleted successfully",
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+
+def register_page_tools():
+    """Register page management tools"""
+    
+    @mcp.tool()
+    async def wp_list_pages(
+        per_page: int = 10,
+        page: int = 1,
+        search: Optional[str] = None,
+        status: Optional[str] = None,
+        order: str = "desc",
+        orderby: str = "date",
+        site: Optional[str] = None
+    ) -> str:
+        """List pages from a WordPress site."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            params = {
+                "per_page": min(per_page, 100),
+                "page": page,
+                "order": order,
+                "orderby": orderby
+            }
+            if search:
+                params["search"] = search
+            if status:
+                params["status"] = status
+                
+            response = await client.get("/wp/v2/pages", params=params)
+            return format_response({
+                "pages": response,
+                "total_found": len(response),
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_get_page(
+        id: int,
+        site: Optional[str] = None
+    ) -> str:
+        """Get a specific page by ID."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            response = await client.get(f"/wp/v2/pages/{id}")
+            return format_response({
+                "page": response,
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_create_page(
+        title: str,
+        content: Optional[str] = None,
+        status: str = "draft",
+        parent: Optional[int] = None,
+        site: Optional[str] = None
+    ) -> str:
+        """Create a new page."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            page_data = {
+                "title": title,
+                "status": status
+            }
+            if content:
+                page_data["content"] = content
+            if parent:
+                page_data["parent"] = parent
+                
+            response = await client.post("/wp/v2/pages", json=page_data)
+            return format_response({
+                "page": response,
+                "message": "Page created successfully",
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_update_page(
+        id: int,
+        title: Optional[str] = None,
+        content: Optional[str] = None,
+        status: Optional[str] = None,
+        parent: Optional[int] = None,
+        site: Optional[str] = None
+    ) -> str:
+        """Update an existing page."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            update_data = {}
+            if title:
+                update_data["title"] = title
+            if content:
+                update_data["content"] = content
+            if status:
+                update_data["status"] = status
+            if parent is not None:
+                update_data["parent"] = parent
+                
+            response = await client.post(f"/wp/v2/pages/{id}", json=update_data)
+            return format_response({
+                "page": response,
+                "message": "Page updated successfully",
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_delete_page(
+        id: int,
+        force: bool = False,
+        site: Optional[str] = None
+    ) -> str:
+        """Delete a page."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            params = {"force": force} if force else {}
+            response = await client.delete(f"/wp/v2/pages/{id}", params=params)
+            return format_response({
+                "page": response,
+                "message": "Page deleted successfully",
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+
+def register_user_tools():
+    """Register user management tools"""
+    
+    @mcp.tool()
+    async def wp_list_users(
+        search: Optional[str] = None,
+        roles: Optional[List[str]] = None,
+        per_page: int = 10,
+        page: int = 1,
+        site: Optional[str] = None
+    ) -> str:
+        """List users from a WordPress site."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            params = {
+                "per_page": min(per_page, 100),
+                "page": page
+            }
+            if search:
+                params["search"] = search
+            if roles:
+                params["roles"] = ",".join(roles)
+                
+            response = await client.get("/wp/v2/users", params=params)
+            return format_response({
+                "users": response,
+                "total_found": len(response),
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_get_user(
+        id: int,
+        site: Optional[str] = None
+    ) -> str:
+        """Get a specific user by ID."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            response = await client.get(f"/wp/v2/users/{id}")
+            return format_response({
+                "user": response,
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_get_current_user(
+        site: Optional[str] = None
+    ) -> str:
+        """Get the currently authenticated user."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            response = await client.get("/wp/v2/users/me")
+            return format_response({
+                "user": response,
+                "site": site_id,
+                "message": "Current authenticated user"
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_create_user(
+        username: str,
+        email: str,
+        password: str,
+        roles: Optional[List[str]] = None,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        site: Optional[str] = None
+    ) -> str:
+        """Create a new user."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            user_data = {
+                "username": username,
+                "email": email,
+                "password": password
+            }
+            if roles:
+                user_data["roles"] = roles
+            if first_name:
+                user_data["first_name"] = first_name
+            if last_name:
+                user_data["last_name"] = last_name
+                
+            response = await client.post("/wp/v2/users", json=user_data)
+            return format_response({
+                "user": response,
+                "message": "User created successfully",
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_update_user(
+        id: int,
+        email: Optional[str] = None,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        roles: Optional[List[str]] = None,
+        site: Optional[str] = None
+    ) -> str:
+        """Update an existing user."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            update_data = {}
+            if email:
+                update_data["email"] = email
+            if first_name:
+                update_data["first_name"] = first_name
+            if last_name:
+                update_data["last_name"] = last_name
+            if roles:
+                update_data["roles"] = roles
+                
+            response = await client.post(f"/wp/v2/users/{id}", json=update_data)
+            return format_response({
+                "user": response,
+                "message": "User updated successfully",
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_delete_user(
+        id: int,
+        reassign: Optional[int] = None,
+        site: Optional[str] = None
+    ) -> str:
+        """Delete a user."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            params = {}
+            if reassign:
+                params["reassign"] = reassign
+                
+            response = await client.delete(f"/wp/v2/users/{id}", params=params)
+            return format_response({
+                "user": response,
+                "message": "User deleted successfully",
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_search_content(
+        query: str,
+        type: str = "any",
+        per_page: int = 10,
+        site: Optional[str] = None
+    ) -> str:
+        """Search across all content types (posts, pages, media)."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            results = {}
+            
+            # Search posts
+            if type in ["any", "posts"]:
+                posts = await client.get("/wp/v2/posts", params={"search": query, "per_page": per_page})
+                results["posts"] = posts
+            
+            # Search pages  
+            if type in ["any", "pages"]:
+                pages = await client.get("/wp/v2/pages", params={"search": query, "per_page": per_page})
+                results["pages"] = pages
+                
+            # Search media
+            if type in ["any", "media"]:
+                media = await client.get("/wp/v2/media", params={"search": query, "per_page": per_page})
+                results["media"] = media
+                
+            return format_response({
+                "search_query": query,
+                "results": results,
+                "site": site_id
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_get_site_health(
+        site: Optional[str] = None
+    ) -> str:
+        """Get WordPress site health and status information."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            # Get site settings and other health indicators
+            settings = await client.get("/wp/v2/settings")
+            users = await client.get("/wp/v2/users", params={"per_page": 1})
+            posts = await client.get("/wp/v2/posts", params={"per_page": 1})
+            
+            return format_response({
+                "site_title": settings.get("title", "Unknown"),
+                "site_url": settings.get("url", "Unknown"),
+                "wordpress_version": settings.get("wordpress_version", "Unknown"),
+                "total_users": len(users),
+                "total_posts": len(posts),
+                "site": site_id,
+                "status": "healthy"
+            })
+        except Exception as e:
+            return format_response({"status": "error", "message": str(e)})
+
+    @mcp.tool()
+    async def wp_get_plugins(
+        status: Optional[str] = None,
+        site: Optional[str] = None
+    ) -> str:
+        """Get installed WordPress plugins information."""
+        try:
+            site_id = wp_manager.get_site_id(site)
+            client = wp_manager.get_client(site_id)
+            
+            # Try to get plugins info (requires appropriate permissions)
+            try:
+                response = await client.get("/wp/v2/plugins")
+                return format_response({
+                    "plugins": response,
+                    "site": site_id
+                })
+            except:
+                # Fallback - simulated response
+                return format_response({
+                    "status": "simulated", 
+                    "message": "Plugin information requires admin access",
+                    "note": "This endpoint may not be available depending on site permissions",
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
