@@ -804,13 +804,13 @@ def register_page_tools():
         """Get a specific page by ID."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
-            response = await client.get(f"/wp/v2/pages/{id}")
-            return format_response({
-                "page": response,
-                "site": site_id
-            })
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.get(f"/wp/v2/pages/{id}")
+                return format_response({
+                    "page": response,
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -825,7 +825,6 @@ def register_page_tools():
         """Create a new page."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
             page_data = {
                 "title": title,
@@ -836,12 +835,13 @@ def register_page_tools():
             if parent:
                 page_data["parent"] = parent
                 
-            response = await client.post("/wp/v2/pages", json=page_data)
-            return format_response({
-                "page": response,
-                "message": "Page created successfully",
-                "site": site_id
-            })
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.post("/wp/v2/pages", json=page_data)
+                return format_response({
+                    "page": response,
+                    "message": "Page created successfully",
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -857,7 +857,6 @@ def register_page_tools():
         """Update an existing page."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
             update_data = {}
             if title:
@@ -869,12 +868,13 @@ def register_page_tools():
             if parent is not None:
                 update_data["parent"] = parent
                 
-            response = await client.post(f"/wp/v2/pages/{id}", json=update_data)
-            return format_response({
-                "page": response,
-                "message": "Page updated successfully",
-                "site": site_id
-            })
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.post(f"/wp/v2/pages/{id}", json=update_data)
+                return format_response({
+                    "page": response,
+                    "message": "Page updated successfully",
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -887,15 +887,15 @@ def register_page_tools():
         """Delete a page."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
             params = {"force": force} if force else {}
-            response = await client.delete(f"/wp/v2/pages/{id}", params=params)
-            return format_response({
-                "page": response,
-                "message": "Page deleted successfully",
-                "site": site_id
-            })
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.delete(f"/wp/v2/pages/{id}", params=params)
+                return format_response({
+                    "page": response,
+                    "message": "Page deleted successfully",
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -950,13 +950,13 @@ def register_user_tools():
         """Get a specific user by ID."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
-            response = await client.get(f"/wp/v2/users/{id}")
-            return format_response({
-                "user": response,
-                "site": site_id
-            })
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.get(f"/wp/v2/users/{id}")
+                return format_response({
+                    "user": response,
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -992,7 +992,6 @@ def register_user_tools():
         """Create a new user."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
             user_data = {
                 "username": username,
@@ -1006,12 +1005,13 @@ def register_user_tools():
             if last_name:
                 user_data["last_name"] = last_name
                 
-            response = await client.post("/wp/v2/users", json=user_data)
-            return format_response({
-                "user": response,
-                "message": "User created successfully",
-                "site": site_id
-            })
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.post("/wp/v2/users", json=user_data)
+                return format_response({
+                    "user": response,
+                    "message": "User created successfully",
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -1027,7 +1027,6 @@ def register_user_tools():
         """Update an existing user."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
             update_data = {}
             if email:
@@ -1039,12 +1038,13 @@ def register_user_tools():
             if roles:
                 update_data["roles"] = roles
                 
-            response = await client.post(f"/wp/v2/users/{id}", json=update_data)
-            return format_response({
-                "user": response,
-                "message": "User updated successfully",
-                "site": site_id
-            })
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.post(f"/wp/v2/users/{id}", json=update_data)
+                return format_response({
+                    "user": response,
+                    "message": "User updated successfully",
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -1057,18 +1057,18 @@ def register_user_tools():
         """Delete a user."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
             params = {}
             if reassign:
                 params["reassign"] = reassign
                 
-            response = await client.delete(f"/wp/v2/users/{id}", params=params)
-            return format_response({
-                "user": response,
-                "message": "User deleted successfully",
-                "site": site_id
-            })
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.delete(f"/wp/v2/users/{id}", params=params)
+                return format_response({
+                    "user": response,
+                    "message": "User deleted successfully",
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -1082,30 +1082,30 @@ def register_user_tools():
         """Search across all content types (posts, pages, media)."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
             results = {}
             
-            # Search posts
-            if type in ["any", "posts"]:
-                posts = await client.get("/wp/v2/posts", params={"search": query, "per_page": per_page})
-                results["posts"] = posts
-            
-            # Search pages  
-            if type in ["any", "pages"]:
-                pages = await client.get("/wp/v2/pages", params={"search": query, "per_page": per_page})
-                results["pages"] = pages
+            async with wp_manager.get_client(site_id) as client:
+                # Search posts
+                if type in ["any", "posts"]:
+                    posts = await client.get("/wp/v2/posts", params={"search": query, "per_page": per_page})
+                    results["posts"] = posts
                 
-            # Search media
-            if type in ["any", "media"]:
-                media = await client.get("/wp/v2/media", params={"search": query, "per_page": per_page})
-                results["media"] = media
-                
-            return format_response({
-                "search_query": query,
-                "results": results,
-                "site": site_id
-            })
+                # Search pages  
+                if type in ["any", "pages"]:
+                    pages = await client.get("/wp/v2/pages", params={"search": query, "per_page": per_page})
+                    results["pages"] = pages
+                    
+                # Search media
+                if type in ["any", "media"]:
+                    media = await client.get("/wp/v2/media", params={"search": query, "per_page": per_page})
+                    results["media"] = media
+                    
+                return format_response({
+                    "search_query": query,
+                    "results": results,
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -1116,22 +1116,22 @@ def register_user_tools():
         """Get WordPress site health and status information."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
-            # Get site settings and other health indicators
-            settings = await client.get("/wp/v2/settings")
-            users = await client.get("/wp/v2/users", params={"per_page": 1})
-            posts = await client.get("/wp/v2/posts", params={"per_page": 1})
-            
-            return format_response({
-                "site_title": settings.get("title", "Unknown"),
-                "site_url": settings.get("url", "Unknown"),
-                "wordpress_version": settings.get("wordpress_version", "Unknown"),
-                "total_users": len(users),
-                "total_posts": len(posts),
-                "site": site_id,
-                "status": "healthy"
-            })
+            async with wp_manager.get_client(site_id) as client:
+                # Get site settings and other health indicators
+                settings = await client.get("/wp/v2/settings")
+                users = await client.get("/wp/v2/users", params={"per_page": 1})
+                posts = await client.get("/wp/v2/posts", params={"per_page": 1})
+                
+                return format_response({
+                    "site_title": settings.get("title", "Unknown"),
+                    "site_url": settings.get("url", "Unknown"),
+                    "wordpress_version": settings.get("wordpress_version", "Unknown"),
+                    "total_users": len(users) if isinstance(users, list) else 0,
+                    "total_posts": len(posts) if isinstance(posts, list) else 0,
+                    "site": site_id,
+                    "status": "healthy"
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -1143,22 +1143,22 @@ def register_user_tools():
         """Get installed WordPress plugins information."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
-            # Try to get plugins info (requires appropriate permissions)
-            try:
-                response = await client.get("/wp/v2/plugins")
-                return format_response({
-                    "plugins": response,
-                    "site": site_id
-                })
-            except:
-                # Fallback - simulated response
-                return format_response({
-                    "status": "simulated", 
-                    "message": "Plugin information requires admin access",
-                    "note": "This endpoint may not be available depending on site permissions",
-                    "site": site_id
-                })
+            async with wp_manager.get_client(site_id) as client:
+                # Try to get plugins info (requires appropriate permissions)
+                try:
+                    response = await client.get("/wp/v2/plugins")
+                    return format_response({
+                        "plugins": response,
+                        "site": site_id
+                    })
+                except:
+                    # Fallback - simulated response
+                    return format_response({
+                        "status": "simulated", 
+                        "message": "Plugin information requires admin access",
+                        "note": "This endpoint may not be available depending on site permissions",
+                        "site": site_id
+                    })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})

@@ -120,7 +120,11 @@ class WordPressClient:
             self.auth = httpx.BasicAuth(config.username, config.app_password)
     
     async def __aenter__(self):
-        self.client = httpx.AsyncClient(auth=self.auth, timeout=30.0)
+        self.client = httpx.AsyncClient(
+            auth=self.auth, 
+            timeout=httpx.Timeout(60.0, connect=30.0),  # Increased timeout
+            limits=httpx.Limits(max_keepalive_connections=10, max_connections=20)
+        )
         return self
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -129,13 +133,22 @@ class WordPressClient:
     async def request(self, method: str, endpoint: str, **kwargs) -> dict:
         """Make HTTP request to WordPress API and return JSON data"""
         url = f"{self.base_url}{endpoint}"
-        response = await self.client.request(method, url, **kwargs)
-        response.raise_for_status()
         try:
-            return response.json()
-        except Exception:
-            # If response is not JSON, return the text content
-            return {"content": response.text, "status_code": response.status_code}
+            response = await self.client.request(method, url, **kwargs)
+            response.raise_for_status()
+            try:
+                return response.json()
+            except Exception:
+                # If response is not JSON, return the text content
+                return {"content": response.text, "status_code": response.status_code}
+        except httpx.TimeoutException:
+            raise Exception(f"Request to {url} timed out")
+        except httpx.ConnectError:
+            raise Exception(f"Failed to connect to {url}")
+        except httpx.HTTPStatusError as e:
+            raise Exception(f"HTTP {e.response.status_code} error: {e.response.text}")
+        except Exception as e:
+            raise Exception(f"Request failed: {str(e)}")
     
     async def get(self, endpoint: str, **kwargs) -> dict:
         """GET request"""
@@ -288,8 +301,39 @@ async def wp_test_auth(site: Optional[str] = None) -> str:
 
 @mcp.tool()
 async def wp_get_auth_status(site: Optional[str] = None) -> str:
-    """Get current authentication status and site information"""
+    """Get current authentication status and site information. If site is not specified and multiple sites exist, returns status for all sites."""
     try:
+        # If no site specified and multiple sites exist, return status for all
+        if site is None and len(wp_manager.clients) > 1:
+            all_status = {}
+            for site_id, config in wp_manager.clients.items():
+                try:
+                    async with wp_manager.get_client(site_id) as client:
+                        await client.get("/")
+                        all_status[site_id] = {
+                            "site_name": config.name,
+                            "site_url": config.site_url,
+                            "username": config.username,
+                            "auth_method": config.auth_method.value,
+                            "auth_status": "active",
+                            "auth_message": "Authentication is working"
+                        }
+                except Exception as e:
+                    all_status[site_id] = {
+                        "site_name": config.name,
+                        "site_url": config.site_url,
+                        "auth_status": "error",
+                        "auth_message": str(e)
+                    }
+            
+            return format_response({
+                "status": "success",
+                "message": f"Authentication status for all {len(all_status)} configured sites",
+                "sites": all_status,
+                "available_sites": list(wp_manager.clients.keys())
+            })
+        
+        # Single site or site specified
         site_id = wp_manager.get_site_id(site)
         config = wp_manager.clients[site_id]
         
@@ -299,6 +343,7 @@ async def wp_get_auth_status(site: Optional[str] = None) -> str:
             await client.get("/")
             
             return format_response({
+                "status": "success",
                 "site_id": site_id,
                 "site_name": config.name,
                 "site_url": config.site_url,
