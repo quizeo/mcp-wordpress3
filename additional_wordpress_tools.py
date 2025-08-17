@@ -633,7 +633,6 @@ def register_comment_tools():
         """List comments from a WordPress site."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
             params = {
                 "per_page": min(per_page, 100),
@@ -646,12 +645,13 @@ def register_comment_tools():
             if search:
                 params["search"] = search
                 
-            response = await client.get("/wp/v2/comments", params=params)
-            return format_response({
-                "comments": response,
-                "total_found": len(response),
-                "site": site_id
-            })
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.get("/wp/v2/comments", params=params)
+                return format_response({
+                    "comments": response,
+                    "total_found": len(response) if isinstance(response, list) else 0,
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -663,13 +663,13 @@ def register_comment_tools():
         """Get a specific comment by ID."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
-            response = await client.get(f"/wp/v2/comments/{id}")
-            return format_response({
-                "comment": response,
-                "site": site_id
-            })
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.get(f"/wp/v2/comments/{id}")
+                return format_response({
+                    "comment": response,
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -684,7 +684,6 @@ def register_comment_tools():
         """Create a new comment on a post."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
             comment_data = {
                 "post": post,
@@ -695,12 +694,13 @@ def register_comment_tools():
             if author_email:
                 comment_data["author_email"] = author_email
                 
-            response = await client.post("/wp/v2/comments", json=comment_data)
-            return format_response({
-                "comment": response,
-                "message": "Comment created successfully",
-                "site": site_id
-            })
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.post("/wp/v2/comments", json=comment_data)
+                return format_response({
+                    "comment": response,
+                    "message": "Comment created successfully",
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -714,7 +714,6 @@ def register_comment_tools():
         """Update an existing comment."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
             update_data = {}
             if content:
@@ -722,12 +721,13 @@ def register_comment_tools():
             if status:
                 update_data["status"] = status
                 
-            response = await client.post(f"/wp/v2/comments/{id}", json=update_data)
-            return format_response({
-                "comment": response,
-                "message": "Comment updated successfully",
-                "site": site_id
-            })
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.post(f"/wp/v2/comments/{id}", json=update_data)
+                return format_response({
+                    "comment": response,
+                    "message": "Comment updated successfully",
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -740,15 +740,15 @@ def register_comment_tools():
         """Delete a comment."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
             params = {"force": force} if force else {}
-            response = await client.delete(f"/wp/v2/comments/{id}", params=params)
-            return format_response({
-                "comment": response,
-                "message": "Comment deleted successfully",
-                "site": site_id
-            })
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.delete(f"/wp/v2/comments/{id}", params=params)
+                return format_response({
+                    "comment": response,
+                    "message": "Comment deleted successfully",
+                    "site": site_id
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 
@@ -769,7 +769,6 @@ def register_page_tools():
         """List pages from a WordPress site."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
             params = {
                 "per_page": min(per_page, 100),
@@ -782,7 +781,13 @@ def register_page_tools():
             if status:
                 params["status"] = status
                 
-            response = await client.get("/wp/v2/pages", params=params)
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.get("/wp/v2/pages", params=params)
+                return format_response({
+                    "pages": response,
+                    "total_found": len(response) if isinstance(response, list) else 0,
+                    "site": site_id
+                })
             return format_response({
                 "pages": response,
                 "total_found": len(response),
@@ -909,7 +914,6 @@ def register_user_tools():
         """List users from a WordPress site."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
             params = {
                 "per_page": min(per_page, 100),
@@ -918,6 +922,15 @@ def register_user_tools():
             if search:
                 params["search"] = search
             if roles:
+                params["roles"] = ",".join(roles)
+                
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.get("/wp/v2/users", params=params)
+                return format_response({
+                    "users": response,
+                    "total_found": len(response) if isinstance(response, list) else 0,
+                    "site": site_id
+                })
                 params["roles"] = ",".join(roles)
                 
             response = await client.get("/wp/v2/users", params=params)
@@ -954,14 +967,15 @@ def register_user_tools():
         """Get the currently authenticated user."""
         try:
             site_id = wp_manager.get_site_id(site)
-            client = wp_manager.get_client(site_id)
             
-            response = await client.get("/wp/v2/users/me")
-            return format_response({
-                "user": response,
-                "site": site_id,
-                "message": "Current authenticated user"
-            })
+            async with wp_manager.get_client(site_id) as client:
+                response = await client.get("/users/me")
+                return format_response({
+                    "status": "success",
+                    "user": response,
+                    "site": site_id,
+                    "message": "Current authenticated user"
+                })
         except Exception as e:
             return format_response({"status": "error", "message": str(e)})
 

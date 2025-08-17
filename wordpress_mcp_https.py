@@ -271,7 +271,8 @@ async def wp_test_auth(site: Optional[str] = None) -> str:
         config = wp_manager.clients[site_id]
         
         async with wp_manager.get_client(site_id) as client:
-            response = await client.get("/")
+            # Test connection with a simple API call
+            await client.get("/")
             
             return format_response({
                 "status": "success",
@@ -279,8 +280,7 @@ async def wp_test_auth(site: Optional[str] = None) -> str:
                 "site_name": config.name,
                 "site_url": config.site_url,
                 "auth_method": config.auth_method.value,
-                "message": "Authentication successful",
-                "api_version": response.headers.get("X-WP-Version", "Unknown")
+                "message": "Authentication successful"
             })
     except Exception as e:
         return format_response({"status": "error", "message": str(e)})
@@ -295,7 +295,8 @@ async def wp_get_auth_status(site: Optional[str] = None) -> str:
         
         # Test connection
         async with wp_manager.get_client(site_id) as client:
-            response = await client.get("/")
+            # Test connection with a simple API call
+            await client.get("/")
             
             return format_response({
                 "site_id": site_id,
@@ -348,8 +349,7 @@ async def wp_get_site_settings(site: Optional[str] = None) -> str:
         site_id = wp_manager.get_site_id(site)
         
         async with wp_manager.get_client(site_id) as client:
-            response = await client.get("/settings")
-            settings = response.json()
+            settings = await client.get("/settings")
             
             return format_response({
                 "status": "success",
@@ -370,8 +370,7 @@ async def wp_update_site_settings(
         site_id = wp_manager.get_site_id(site)
         
         async with wp_manager.get_client(site_id) as client:
-            response = await client.post("/settings", json=settings)
-            updated_settings = response.json()
+            updated_settings = await client.post("/settings", json=settings)
             
             return format_response({
                 "status": "success",
@@ -404,15 +403,14 @@ async def wp_search_site(
             params["type"] = post_type
         
         async with wp_manager.get_client(site_id) as client:
-            response = await client.get("/search", params=params)
-            results = response.json()
+            results = await client.get("/search", params=params)
             
             return format_response({
                 "status": "success",
                 "site_id": site_id,
                 "search_term": search,
                 "post_type": post_type,
-                "results_count": len(results),
+                "results_count": len(results) if isinstance(results, list) else 0,
                 "results": results
             })
     except Exception as e:
@@ -428,13 +426,11 @@ async def wp_get_application_passwords(site: Optional[str] = None) -> str:
         
         async with wp_manager.get_client(site_id) as client:
             # Get current user first
-            user_response = await client.get("/users/me")
-            user = user_response.json()
+            user = await client.get("/users/me")
             user_id = user["id"]
             
             # Get application passwords
-            response = await client.get(f"/users/{user_id}/application-passwords")
-            passwords = response.json()
+            passwords = await client.get(f"/users/{user_id}/application-passwords")
             
             return format_response({
                 "status": "success",
@@ -458,16 +454,14 @@ async def wp_create_application_password(
         
         async with wp_manager.get_client(site_id) as client:
             # Get current user
-            user_response = await client.get("/users/me")
-            user = user_response.json()
+            user = await client.get("/users/me")
             user_id = user["id"]
             
             # Create application password
-            response = await client.post(
+            password_data = await client.post(
                 f"/users/{user_id}/application-passwords",
                 json={"name": name}
             )
-            password_data = response.json()
             
             return format_response({
                 "status": "success",
@@ -490,8 +484,7 @@ async def wp_delete_application_password(
         
         async with wp_manager.get_client(site_id) as client:
             # Get current user
-            user_response = await client.get("/users/me")
-            user = user_response.json()
+            user = await client.get("/users/me")
             user_id = user["id"]
             
             # Delete application password
@@ -535,13 +528,12 @@ async def wp_list_posts(
             params["author"] = author
             
         async with wp_manager.get_client(site_id) as client:
-            response = await client.get("/posts", params=params)
-            posts = response.json()
+            posts = await client.get("/posts", params=params)
             
             return format_response({
                 "status": "success",
                 "site_id": site_id,
-                "posts_count": len(posts),
+                "posts_count": len(posts) if isinstance(posts, list) else 0,
                 "page": page,
                 "per_page": per_page,
                 "posts": posts
@@ -558,8 +550,7 @@ async def wp_get_post(post_id: int, site: Optional[str] = None) -> str:
         post_id = validate_positive_int(post_id, "post_id")
         
         async with wp_manager.get_client(site_id) as client:
-            response = await client.get(f"/posts/{post_id}")
-            post = response.json()
+            post = await client.get(f"/posts/{post_id}")
             
             return format_response({
                 "status": "success",
@@ -598,8 +589,7 @@ async def wp_create_post(
             post_data["featured_media"] = featured_media
             
         async with wp_manager.get_client(site_id) as client:
-            response = await client.post("/posts", json=post_data)
-            post = response.json()
+            post = await client.post("/posts", json=post_data)
             
             return format_response({
                 "status": "success",
@@ -639,8 +629,7 @@ async def wp_update_post(
             post_data["featured_media"] = featured_media
             
         async with wp_manager.get_client(site_id) as client:
-            response = await client.put(f"/posts/{post_id}", json=post_data)
-            post = response.json()
+            post = await client.put(f"/posts/{post_id}", json=post_data)
             
             return format_response({
                 "status": "success",
@@ -666,8 +655,7 @@ async def wp_delete_post(
         params = {"force": force}
         
         async with wp_manager.get_client(site_id) as client:
-            response = await client.delete(f"/posts/{post_id}", params=params)
-            result = response.json()
+            result = await client.delete(f"/posts/{post_id}", params=params)
             
             return format_response({
                 "status": "success",
@@ -690,14 +678,13 @@ async def wp_get_post_revisions(
         post_id = validate_positive_int(post_id, "post_id")
         
         async with wp_manager.get_client(site_id) as client:
-            response = await client.get(f"/posts/{post_id}/revisions")
-            revisions = response.json()
+            revisions = await client.get(f"/posts/{post_id}/revisions")
             
             return format_response({
                 "status": "success",
                 "site_id": site_id,
                 "post_id": post_id,
-                "revisions_count": len(revisions),
+                "revisions_count": len(revisions) if isinstance(revisions, list) else 0,
                 "revisions": revisions
             })
     except Exception as e:
